@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useChat } from '@ai-sdk/react';
-import { Input } from '@/components/ui/input';
 import {
   Conversation,
   ConversationContent,
@@ -19,6 +18,8 @@ import {
   PromptInputTextarea,
 } from '@/components/ai-elements/prompt-input';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { DigitalClock } from '@/components/DigitalClock';
+import { type GeoLocation } from '@/lib/types';
 
 const ChatPage = () => {
   const { messages, sendMessage, status } = useChat();
@@ -40,29 +41,58 @@ const ChatPage = () => {
             messages.map((message) => (
               <Message key={message.id} from={message.role}>
                 <MessageContent>
-                  {message.role === 'assistant' ? (
-                    <>
-                      {isLoading && (
-                        <div className="flex gap-x-2 items-center">
-                          <p className="shimmer">Haru is thinking</p>
-                          <LoadingSpinner />
-                        </div>
+                  {message.role === 'assistant'
+                    ? message.parts.map((part, i) => {
+                        switch (part.type) {
+                          case 'text':
+                            return (
+                              <MessageResponse key={`${message.id}-${i}`}>
+                                {part.text}
+                              </MessageResponse>
+                            );
+
+                          case 'tool-getDateTime':
+                            if (part.state === 'output-available') {
+                              return (
+                                <DigitalClock
+                                  key={part.toolCallId}
+                                  location={part.output as GeoLocation}
+                                />
+                              );
+                            }
+
+                            return (
+                              <div
+                                key={part.toolCallId}
+                                className="flex items-center gap-2"
+                              >
+                                <LoadingSpinner />
+                                <span>Finding local time...</span>
+                              </div>
+                            );
+                        }
+                      })
+                    : message.parts.map(
+                        (part) => part.type === 'text' && part.text,
                       )}
-                      <MessageResponse>
-                        {message.parts
-                          .filter((part) => part.type === 'text')
-                          .map((part) => part.text)
-                          .join('')}
-                      </MessageResponse>
-                    </>
-                  ) : (
-                    message.parts.map(
-                      (part) => part.type === 'text' && part.text,
-                    )
-                  )}
                 </MessageContent>
               </Message>
             ))
+          )}
+
+          {isLoading && (
+            <Message from="assistant">
+              <MessageContent>
+                <div className="flex gap-x-2 items-center">
+                  <p className="shimmer">
+                    {status === 'streaming'
+                      ? 'Haru is typing...'
+                      : 'Haru is thinking...'}
+                  </p>
+                  <LoadingSpinner />
+                </div>
+              </MessageContent>
+            </Message>
           )}
         </ConversationContent>
       </Conversation>

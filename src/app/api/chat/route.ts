@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { openai } from '@ai-sdk/openai';
 import { env } from '@/lib/env/server';
 import { SYSTEM_PROMPT } from '@/lib/agent/systemPrompt';
+import { AgentTools } from '@/lib/agent/tools';
 
 export const maxDuration = 30;
 
@@ -22,6 +23,7 @@ export async function POST(req: NextRequest) {
       messages: await convertToModelMessages(messages),
       stopWhen: stepCountIs(5),
       maxOutputTokens: 1000,
+      tools: AgentTools,
     });
 
     return createUIMessageStreamResponse({
