@@ -33,7 +33,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         inter.variable,
       )}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full dark">{children}</body>
     </html>
   );
 }
